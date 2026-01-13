@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Khet - Laser Chess</title>
+    <link rel="stylesheet" href="css/game.css">
+</head>
+<body>
+    <div class="game-container">
+        <!-- Header -->
+        <header>
+            <h1>KHET - Laser Chess</h1>
+            <div id="turnIndicator">Player 1's Turn</div>
+        </header>
+
+        <!-- Main Game Area -->
+        <div class="main-game">
+            <!-- Player 1 Panel -->
+            <aside class="player-panel player1-panel">
+                <h2>Player 1</h2>
+                <div class="player-color" style="background: #4A90E2;"></div>
+                <div class="player-info">
+                    <p>Pyramids: <span id="p1-reserve">7</span></p>
+                </div>
+                <div class="reserve" id="p1-reserve-display">
+                    <div class="pyramid-slot">△</div>
+                    <div class="pyramid-slot">△</div>
+                    <div class="pyramid-slot">△</div>
+                    <div class="pyramid-slot">△</div>
+                    <div class="pyramid-slot">△</div>
+                    <div class="pyramid-slot">△</div>
+                    <div class="pyramid-slot">△</div>
+                </div>
+            </aside>
+
+            <!-- Canvas Board -->
+            <div class="board-container">
+                <canvas id="gameBoard" width="600" height="600"></canvas>
+            </div>
+
+            <!-- Player 2 Panel -->
+            <aside class="player-panel player2-panel">
+                <h2>Player 2</h2>
+                <div class="player-color" style="background: #F5A623;"></div>
+                <div class="player-info">
+                    <p>Pyramids: <span id="p2-reserve">7</span></p>
+                </div>
+                <div class="reserve" id="p2-reserve-display">
+                    <div class="pyramid-slot">△</div>
+                    <div class="pyramid-slot">△</div>
+                    <div class="pyramid-slot">△</div>
+                    <div class="pyramid-slot">△</div>
+                    <div class="pyramid-slot">△</div>
+                    <div class="pyramid-slot">△</div>
+                    <div class="pyramid-slot">△</div>
+                </div>
+            </aside>
+        </div>
+
+        <!-- Actions Panel -->
+        <div class="actions-panel">
+            <h3>Actions</h3>
+            <div class="action-buttons">
+                <button id="rotateBtn" class="action-btn">Rotate Piece</button>
+                <button id="moveBtn" class="action-btn">Move Piece</button>
+                <button id="placePyramidBtn" class="action-btn">Place Pyramid</button>
+                <button id="swapScarabBtn" class="action-btn">Swap Scarab</button>
+            </div>
+            <div id="actionHint" class="action-hint">Select an action</div>
+        </div>
+
+        <!-- Log Panel -->
+        <div class="log-panel">
+            <h3>Game Log</h3>
+            <div id="gameLog" class="log-content">
+                <p>Game started. Player 1's turn.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/pieces.js"></script>
+    <script src="js/display.js"></script>
+    <script src="js/game.js"></script>
+</body>
+</html>
