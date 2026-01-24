@@ -5,30 +5,88 @@ const httpProxy = require('http-proxy');
 // We will need a proxy to send requests to the other services.
 const proxy = httpProxy.createProxyServer();
 
+
+
+// Proxy error handler
+proxy.on('error', (err, req, res) => {
+  console.error('Proxy error:', err);
+  if (res.writeHead) {
+    res.writeHead(500, { 'Content-Type': 'text/plain' });
+    res.end('Proxy error: ' + err.message);
+  }
+});
+
+
 /* The http module contains a createServer function, which takes one argument, which is the function that
 ** will be called whenever a new request arrives to the server.
  */
-http.createServer(function (request, response) {
-    // First, let's check the URL to see if it's a REST request or a file request.
-    // We will remove all cases of "../" in the url for security purposes.
-    let filePath = request.url.split("/").filter(function(elem) {
-        return elem !== "..";
-    });
 
-    try {
-        // If the URL starts by /api, then it's a REST request (you can change that if you want).
-        if (filePath[1] === "api") {
-            //TODO: Add middlewares and call microservices depending on the request.
 
-        // If it doesn't start by /api, then it's a request for a file.
-        } else {
-            console.log("Request for a file received, transferring to the file service")
-            proxy.web(request, response, {target: "http://127.0.0.1:8001"});
-        }
-    } catch(error) {
-        console.log(`error while processing ${request.url}: ${error}`)
-        response.statusCode = 400;
-        response.end(`Something in your request (${request.url}) is strange...`);
+// Create HTTP server
+const server = http.createServer(function (request, response) {
+  // Remove "../" for security
+  let filePath = request.url.split("/").filter(elem => elem !== "..");
+
+  try {
+    // API requests
+    if (filePath[1] === "api") {
+      console.log(`[GATEWAY] API request received: ${request.url}`);
+      
+      // TODO: Add more API routes here (user, social, etc.)
+      // For now, all /api requests go to game service
+      
+      console.log(`[GATEWAY] Proxying to game service (8002)`);
+      proxy.web(request, response, { 
+        target: "http://127.0.0.1:8002"
+      });
+      
+    // File requests
+    } else {
+      console.log(`[GATEWAY] File request: ${request.url}`);
+      proxy.web(request, response, { 
+        target: "http://127.0.0.1:8001" 
+      });
     }
-// For the server to be listening to request, it needs a port, which is set thanks to the listen function.
-}).listen(8000);
+  } catch(error) {
+    console.error(`[GATEWAY] Error processing ${request.url}:`, error);
+    response.statusCode = 400;
+    response.end(`Something went wrong: ${error.message}`);
+  }
+});
+
+// WebSocket upgrade handling (for Socket.io)
+server.on('upgrade', (request, socket, head) => {
+  let filePath = request.url.split("/").filter(elem => elem !== "..");
+  
+  console.log(`[GATEWAY] WebSocket upgrade request: ${request.url}`);
+  
+  try {
+    if (filePath[1] === "api") {
+      console.log(`[GATEWAY] Proxying WebSocket to game service (8002)`);
+      proxy.ws(request, socket, head, { 
+        target: "ws://127.0.0.1:8002" 
+      });
+    } else {
+      console.log(`[GATEWAY] Proxying WebSocket to file service (8001)`);
+      proxy.ws(request, socket, head, { 
+        target: "ws://127.0.0.1:8001" 
+      });
+    }
+  } catch(error) {
+    console.error(`[GATEWAY] WebSocket error:`, error);
+    socket.destroy();
+  }
+});
+
+// Start gateway
+const PORT = 8000;
+server.listen(PORT, () => {
+  console.log(`=============================================`);
+  console.log(` Gateway started successfully`);
+  console.log(` Listening on port ${PORT}`);
+  console.log(`Routing configuration:`);
+  console.log(`   /api/*     → Game Service (8002)`);
+  console.log(`   /*         → File Service (8001)`);
+  console.log(` Started at: ${new Date().toISOString()}`);
+  console.log(`=============================================`);
+});
