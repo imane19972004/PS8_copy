@@ -1,53 +1,38 @@
-#!/bin/bash
+# start-all.ps1 - Démarre tous les services PS8
 
-echo "🚀 Starting all PS8 services..."
-echo ""
+Write-Host " Starting PS8 Services..." -ForegroundColor Green
+Write-Host ""
 
-# Kill existing processes on these ports
-echo "🧹 Cleaning up existing processes..."
-lsof -ti:8000 | xargs kill -9 2>/dev/null
-lsof -ti:8001 | xargs kill -9 2>/dev/null
-lsof -ti:8002 | xargs kill -9 2>/dev/null
+# Kill existing node processes
+Write-Host " Cleaning up existing processes..." -ForegroundColor Yellow
+taskkill /F /IM node.exe 2>$null
+Start-Sleep -Seconds 1
 
-sleep 1
+# Start File Service
+Write-Host " Starting File Service (8001)..." -ForegroundColor Cyan
+Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd services/files; node index.js"
+Start-Sleep -Seconds 2
 
-# Start services in background
-echo "📁 Starting File Service (8001)..."
-node services/files/index.js > logs/files.log 2>&1 &
-FILE_PID=$!
+# Start Game Service
+Write-Host " Starting Game Service (8002)..." -ForegroundColor Cyan
+Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd services/game; node index.js"
+Start-Sleep -Seconds 2
 
-sleep 1
+# Start Gateway
+Write-Host "🚪 Starting Gateway (8000)..." -ForegroundColor Cyan
+Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd services/gateway; node index.js"
+Start-Sleep -Seconds 2
 
-echo "🎮 Starting Game Service (8002)..."
-node services/game/index.js > logs/game.log 2>&1 &
-GAME_PID=$!
+Write-Host ""
+Write-Host " All services started!" -ForegroundColor Green
+Write-Host ""
+Write-Host " URLs:" -ForegroundColor Yellow
+Write-Host "   Gateway: http://localhost:8000"
+Write-Host "   Test Client: http://localhost:8000/test-client.html"
+Write-Host ""
+Write-Host "Press any key to stop all services..."
+$null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
 
-sleep 1
-
-echo "🚪 Starting Gateway (8000)..."
-node services/gateway/index.js > logs/gateway.log 2>&1 &
-GATEWAY_PID=$!
-
-sleep 2
-
-echo ""
-echo "✅ All services started!"
-echo ""
-echo "📊 Process IDs:"
-echo "   File Service: $FILE_PID"
-echo "   Game Service: $GAME_PID"
-echo "   Gateway: $GATEWAY_PID"
-echo ""
-echo "🌐 URLs:"
-echo "   Gateway: http://localhost:8000"
-echo "   File Service: http://localhost:8001"
-echo "   Game Service: http://localhost:8002"
-echo ""
-echo "🧪 Test Client: http://localhost:8000/test-client.html"
-echo ""
-echo "📝 Logs:"
-echo "   tail -f logs/gateway.log"
-echo "   tail -f logs/files.log"
-echo "   tail -f logs/game.log"
-echo ""
-echo "🛑 To stop all services: ./stop-all.sh"
+# Cleanup on exit
+taskkill /F /IM node.exe
+Write-Host " All services stopped." -ForegroundColor Red

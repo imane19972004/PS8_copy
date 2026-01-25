@@ -7,6 +7,39 @@
     <link rel="stylesheet" href="css/game.css" />
 </head>
 
+<!-- Socket.io CDN -->
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    
+    <!-- Socket Client -->
+    <script src="js/socket-client.js"></script>
+    
+    <!-- Initialisation Socket au démarrage -->
+    <script>
+        // Créer une instance du client Socket
+        const socketClient = new SocketClient();
+        
+        // Connecter au Game Service
+        socketClient.connect();
+        
+        // Attendre 1 seconde puis créer une partie vs AI
+        setTimeout(() => {
+            console.log('🎮 Creating game vs AI...');
+            socketClient.createGame(true, 'Player 1');
+        }, 1000);
+        
+        // Callbacks pour les événements de jeu
+        socketClient.onGameUpdated = (data) => {
+            console.log('Game updated from server:', data);
+            // TODO: Mettre à jour le frontend avec le nouvel état
+        };
+        
+        socketClient.onAIAction = (data) => {
+            console.log('AI played:', data);
+            // TODO: Appliquer l'action de l'IA au frontend
+        };
+    </script>
+
+
 <body>
     <div class="game-container">
         <!-- Header -->
@@ -57,7 +90,7 @@
 
         <!-- Log Panel -->
         <section class="log-panel">
-            <h3>📜 Game Log 📜</h3>
+            <h3> Game Log </h3>
             <div id="gameLog" class="log-content">
                 <p>Game started. Player 1's turn.</p>
             </div>

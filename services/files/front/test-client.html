@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Game Service - Socket.io Test Client</title>
+    <title>Game Service - Socket.io Test Client [FIXED]</title>
     <style>
         body {
             font-family: 'Courier New', monospace;
@@ -39,6 +39,10 @@
         button:hover {
             background: #00cc00;
         }
+        button:disabled {
+            background: #666;
+            cursor: not-allowed;
+        }
         #log {
             background: #0a0a0a;
             border: 1px solid #00ff00;
@@ -57,14 +61,15 @@
         .log-sent { border-left-color: #ffaa00; }
         .log-received { border-left-color: #00ff00; }
         .log-error { border-left-color: #ff0000; color: #ff0000; }
+        .log-info { border-left-color: #00aaff; }
     </style>
 </head>
 <body>
-    <h1>🎮 Game Service - Socket.io Test Client</h1>
+    <h1>🎮 Game Service - Socket.io Test Client [FIXED VERSION]</h1>
     
     <div class="status">
         <strong>Connection Status:</strong> 
-        <span id="status" class="disconnected">Disconnected</span>
+        <span id="status" class="disconnected">Connecting...</span>
     </div>
     
     <div class="status">
@@ -73,9 +78,9 @@
     </div>
     
     <div>
-        <button onclick="testPing()">📡 Test Ping</button>
-        <button onclick="testCreateGame()">🎯 Test Create Game</button>
-        <button onclick="testHealthCheck()">❤️ Health Check (Root)</button>
+        <button id="pingBtn" onclick="testPing()" disabled>📡 Test Ping</button>
+        <button id="gameBtn" onclick="testCreateGame()" disabled>🎯 Test Create Game</button>
+        <button id="healthBtn" onclick="testHealthCheck()" disabled>❤️ Health Check</button>
         <button onclick="clearLog()">🗑️ Clear Log</button>
     </div>
     
@@ -102,6 +107,11 @@
             statusEl.textContent = connected ? 'Connected ✓' : 'Disconnected ✗';
             statusEl.className = connected ? 'connected' : 'disconnected';
             socketIdEl.textContent = socketId;
+            
+            // Enable/disable buttons
+            document.getElementById('pingBtn').disabled = !connected;
+            document.getElementById('gameBtn').disabled = !connected;
+            document.getElementById('healthBtn').disabled = !rootSocket?.connected;
         }
         
         function clearLog() {
@@ -109,60 +119,96 @@
             log('Log cleared', 'info');
         }
         
-        // Connect to /api/game namespace
-        log('Connecting to http://localhost:8000/api/game...', 'info');
-        socket = io('http://localhost:8000/api/game');
+        // CORRECTION PRINCIPALE: Connexion au namespace /api/game
+        log('🔌 Connecting to http://localhost:8000/api/game...', 'info');
+        socket = io('http://localhost:8000/api/game', {
+            transports: ['websocket', 'polling'],
+            reconnection: true,
+            reconnectionDelay: 1000,
+            reconnectionAttempts: 5
+        });
         
-        // Connect to root namespace for health checks
-        rootSocket = io('http://localhost:8000');
+        // Root namespace pour health checks
+        log('🔌 Connecting to http://localhost:8000/ (root)...', 'info');
+        rootSocket = io('http://localhost:8000', {
+            transports: ['websocket', 'polling']
+        });
         
+        // === Events /api/game ===
         socket.on('connect', () => {
-            log(`Connected to /api/game namespace! Socket ID: ${socket.id}`, 'received');
+            log(`✅ CONNECTED to /api/game! Socket ID: ${socket.id}`, 'received');
             updateStatus(true, socket.id);
+            
+            // Auto-test ping after connection
+            setTimeout(() => {
+                log('🤖 Running auto-test...', 'info');
+                testPing();
+            }, 500);
+        });
+        
+        socket.on('connect_error', (error) => {
+            log(`❌ CONNECTION ERROR: ${error.message}`, 'error');
+            log(`   Check that Game Service is running on port 8002`, 'error');
+            updateStatus(false);
         });
         
         socket.on('disconnect', (reason) => {
-            log(`Disconnected from /api/game: ${reason}`, 'error');
+            log(`❌ DISCONNECTED: ${reason}`, 'error');
             updateStatus(false);
         });
         
         socket.on('pong', (data) => {
-            log(`PONG received from /api/game: ${JSON.stringify(data)}`, 'received');
+            log(`📡 PONG received: ${JSON.stringify(data)}`, 'received');
         });
         
         socket.on('game-created', (data) => {
-            log(`GAME CREATED response: ${JSON.stringify(data, null, 2)}`, 'received');
+            log(`🎮 GAME CREATED: ${JSON.stringify(data, null, 2)}`, 'received');
+        });
+        
+        // === Events root ===
+        rootSocket.on('connect', () => {
+            log(`✅ Connected to root namespace`, 'received');
+            updateStatus(socket.connected, socket.id);
         });
         
         rootSocket.on('health-status', (data) => {
-            log(`HEALTH STATUS (root): ${JSON.stringify(data)}`, 'received');
+            log(`❤️ HEALTH STATUS: ${JSON.stringify(data)}`, 'received');
         });
         
+        // === Test Functions ===
         function testPing() {
-            log('Sending PING to /api/game...', 'sent');
+            if (!socket.connected) {
+                log('❌ Not connected to /api/game!', 'error');
+                return;
+            }
+            log('📤 Sending PING...', 'sent');
             socket.emit('ping');
         }
         
         function testCreateGame() {
+            if (!socket.connected) {
+                log('❌ Not connected to /api/game!', 'error');
+                return;
+            }
             const data = {
                 vsAI: true,
                 playerName: 'TestPlayer'
             };
-            log(`Sending CREATE-GAME: ${JSON.stringify(data)}`, 'sent');
+            log(`📤 Sending CREATE-GAME: ${JSON.stringify(data)}`, 'sent');
             socket.emit('create-game', data);
         }
         
         function testHealthCheck() {
-            log('Sending HEALTH-CHECK to root namespace...', 'sent');
+            if (!rootSocket.connected) {
+                log('❌ Root socket not connected!', 'error');
+                return;
+            }
+            log('📤 Sending HEALTH-CHECK...', 'sent');
             rootSocket.emit('health-check');
         }
         
-        // Auto health check on load
-        setTimeout(() => {
-            if (socket.connected) {
-                testHealthCheck();
-            }
-        }, 1000);
+        // Log initial connection attempts
+        log('⏳ Waiting for connection...', 'info');
     </script>
 </body>
 </html>

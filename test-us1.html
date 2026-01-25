@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>US1 Test</title>
+</head>
+<body>
+    <h1>US1 - Test connexion Game Service</h1>
+    <div id="result">Testing...</div>
+    
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <script>
+        const socket = io('http://localhost:8002/api/game');
+
+socket.on('connect', () => {
+  console.log('✅ Connected:', socket.id);
+  
+  // Teste la création de partie
+  socket.emit('create-game', { vsAI: true, playerName: 'Test' });
+});
+
+socket.on('game-created', (data) => {
+  console.log('🎮 GAME CREATED:', data);
+});
+    </script> 
+</body>
+</html>

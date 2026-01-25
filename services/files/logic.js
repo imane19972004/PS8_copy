@@ -65,15 +65,17 @@ function manageRequest(request, response) {
                 // If the file is OK, let's set the MIME type and send it.
                 response.setHeader('Content-type', mimeTypes[extension] || mimeTypes['default'] );
                 response.end(data);
+                console.log(`Served: ${pathName} (${mimeTypes[extension] || mimeTypes['default']})`);
             }
         });
     });
 }
 
 function send404(path, response) {
-    // Note that you can create a beautiful html page and return that page instead of the simple message below.
+    // Note that we can create a beautiful html page and return that page instead of the simple message below.
     response.statusCode = 404;
     response.end(`File ${path} not found!`);
+    console.error(` File not found: ${path}`);
 }
 
 exports.manage = manageRequest;
