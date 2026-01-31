@@ -1,6 +1,6 @@
-import { GAME_CONFIG } from '../utils/Constants.js';
+const { GAME_CONFIG } = require('../utils/Constants.js');
 
-export default class TurnManager {
+class TurnManager {
   constructor(board) {
     this.board = board;
     this.currentPlayer = 1;
@@ -69,3 +69,5 @@ export default class TurnManager {
     // TODO: implémenter si nécessaire
   }
 }
+
+module.exports = TurnManager;

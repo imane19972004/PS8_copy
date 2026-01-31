@@ -1,7 +1,7 @@
-import Piece from './Piece.js';
-import { PIECE_TYPES } from '../utils/Constants.js';
+const Piece = require('./Piece.js');
+const { PIECE_TYPES } = require('../utils/Constants.js');
 
-export default class Pharaoh extends Piece {
+class Pharaoh extends Piece {
     constructor(player, x, y) {
         super(PIECE_TYPES.PHARAOH, player, x, y, 0);
     }
@@ -10,3 +10,5 @@ export default class Pharaoh extends Piece {
     // Hérite de canMove() = false et canRotate() = false
     // Hérite de interactWithLaser() qui retourne DESTROY
 }
+
+module.exports = Pharaoh;

@@ -1,4 +1,4 @@
-export default class Piece {
+class Piece {
   constructor(type, player, x, y, orientation = 0) {
     this.type = type;
     this.player = player;
@@ -44,3 +44,5 @@ export default class Piece {
     };
   }
 }
+
+module.exports = Piece;

@@ -1,10 +1,10 @@
-import Board from './Board.js';
-import ActionExecutor from './ActionExecutor.js';
-import TurnManager from './TurnManager.js';
-import LaserSimulator from './LaserSimulator.js';
-import BoardSetup from './BoardSetup.js';
+const Board = require('./Board.js');
+const ActionExecutor = require('./ActionExecutor.js');
+const TurnManager = require('./TurnManager.js');
+const LaserSimulator = require('./LaserSimulator.js');
+const BoardSetup = require('./BoardSetup.js');
 
-export default class GameEngine {
+class GameEngine {
   constructor(logger) {
     this.board = new Board();
     this.turnManager = new TurnManager(this.board);
@@ -35,12 +35,12 @@ export default class GameEngine {
     // 1. ROTATION (tous sauf Pharaoh)
     if (piece.type !== 'pharaoh' && piece.canRotate?.()) {
       actions.push({
-        type: 'rotate',
+        type: 'ROTATE',
         direction: 'clockwise',
         label: '↻ Rotation Horaire'
       });
       actions.push({
-        type: 'rotate',
+        type: 'ROTATE',
         direction: 'anticlockwise',
         label: '↺ Rotation Anti-horaire'
       });
@@ -51,7 +51,7 @@ export default class GameEngine {
       const validMoves = this.getValidMovesForPiece(piece);
       if (validMoves.length > 0) {
         actions.push({
-          type: 'move',
+          type: 'MOVE',
           label: '↦ Déplacer',
           moveCount: validMoves.length
         });
@@ -64,7 +64,7 @@ export default class GameEngine {
       swapTargets.forEach(target => {
         const cooldown = piece.swapCooldowns?.[target.type] || 0;
         actions.push({
-          type: 'swap',
+          type: 'EXCHANGE',
           targetPiece: target,
           label: `🔄 Échanger avec ${target.type}`,
           cooldown: cooldown > 0 ? cooldown : 0
@@ -254,4 +254,10 @@ export default class GameEngine {
           }
       };
   }
+
+  getInitialPiecePositions(board) {
+      return BoardSetup.getInitialPositions(board);
+  }
 }
+
+module.exports = GameEngine;

@@ -1,7 +1,7 @@
-import Piece from './Piece.js';
-import { PIECE_TYPES, DIRECTION_VECTORS } from '../utils/Constants.js';
+const Piece = require('./Piece.js');
+const { PIECE_TYPES, DIRECTION_VECTORS } = require('../utils/Constants.js');
 
-export default class Anubis extends Piece {
+class Anubis extends Piece {
   constructor(player, x, y, orientation) {
     super(PIECE_TYPES.ANUBIS, player, x, y, orientation);
   }
@@ -65,3 +65,5 @@ export default class Anubis extends Piece {
     return sides;
   }
 }
+
+module.exports = Anubis;

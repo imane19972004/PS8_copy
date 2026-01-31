@@ -1,7 +1,7 @@
-import Piece from './Piece.js';
-import { PIECE_TYPES, DIRECTION_VECTORS } from '../utils/Constants.js';
+const Piece = require('./Piece.js');
+const { PIECE_TYPES, DIRECTION_VECTORS } = require('../utils/Constants.js');
 
-export default class Sphinx extends Piece {
+class Sphinx extends Piece {
   constructor(player, x, y, orientation) {
     super(PIECE_TYPES.SPHINX, player, x, y, orientation);
   }
@@ -41,3 +41,5 @@ export default class Sphinx extends Piece {
     };
   }
 }
+
+module.exports = Sphinx;

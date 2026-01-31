@@ -1,4 +1,4 @@
-export default class LaserSimulator {
+class LaserSimulator {
   simulate(board, player) {
     const events = [];
     
@@ -82,3 +82,5 @@ export default class LaserSimulator {
     return events;
   }
 }
+
+module.exports = LaserSimulator;

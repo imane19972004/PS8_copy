@@ -2,8 +2,8 @@
  * Game Controller avec toutes les routes
  */
 
-import GameEngine from '../core/GameEngine.js';
-import Logger from '../utils/ServerLogger.js';
+const GameEngine = require('../core/GameEngine.js');
+const Logger = require('../utils/ServerLogger.js');
 
 // IN-MEMORY GAME STORAGE
 const games = new Map();
@@ -47,7 +47,7 @@ class GameSession {
  * POST /api/game/create
  * Body: { mode: 'local'|'ai'|'online', players: [...] }
  */
-export async function createGame(data, res) {
+async function createGame(data, res) {
     try {
         const { mode, players } = data;
 
@@ -69,7 +69,9 @@ export async function createGame(data, res) {
         res.end(JSON.stringify({
             success: true,
             gameId,
-            state: game.getState()
+            mode: mode,
+            state: game.getState(),
+            initialPositions: game.engine.getInitialPiecePositions(game.getState().gameState.board)
         }));
 
     } catch (error) {
@@ -83,7 +85,7 @@ export async function createGame(data, res) {
  * GET GAME STATE
  * GET /api/game/state?gameId=xxx
  */
-export async function getGameState(query, res) {
+async function getGameState(query, res) {
     try {
         const { gameId } = query;
 
@@ -104,6 +106,7 @@ export async function getGameState(query, res) {
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({
             success: true,
+            mode: game.mode,
             state: game.getState()
         }));
 
@@ -119,9 +122,10 @@ export async function getGameState(query, res) {
  * POST /api/game/action
  * Body: { gameId, action }
  */
-export async function executeAction(data, res) {
+async function executeAction(data, res) {
     try {
         const { gameId, action } = data;
+        console.log('[GAME] Executing action:', data);
 
         if (!gameId || !action) {
             res.writeHead(400, { 'Content-Type': 'application/json' });
@@ -170,7 +174,7 @@ export async function executeAction(data, res) {
  * GET VALID MOVES
  * GET /api/game/moves?gameId=xxx&x=5&y=3
  */
-export async function getValidMoves(query, res) {
+async function getValidMoves(query, res) {
     try {
         const { gameId, x, y } = query;
 
@@ -207,7 +211,7 @@ export async function getValidMoves(query, res) {
  * GET VALID ACTIONS
  * GET /api/game/actions?gameId=xxx&x=5&y=3
  */
-export async function getValidActions(query, res) {
+async function getValidActions(query, res) {
     try {
         const { gameId, x, y } = query;
 
@@ -244,7 +248,7 @@ export async function getValidActions(query, res) {
  * GET VALID PLACEMENTS
  * GET /api/game/placements?gameId=xxx
  */
-export async function getValidPlacements(query, res) {
+async function getValidPlacements(query, res) {
     try {
         const { gameId } = query;
 
@@ -282,3 +286,12 @@ setInterval(() => {
         }
     });
 }, 30 * 60 * 1000);
+
+module.exports = {
+    createGame,
+    getGameState,
+    executeAction,
+    getValidMoves,
+    getValidActions,
+    getValidPlacements
+};

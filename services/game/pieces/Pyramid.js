@@ -1,10 +1,13 @@
-import Piece from './Piece.js';
-import { PIECE_TYPES } from '../utils/Constants.js';
-import LaserPhysics from '../utils/LaserPhysics.js';
+const Piece = require('./Piece.js');
+const LaserPhysics = require('../rules/LaserPhysics.js');
+const { PIECE_TYPES } = require('../utils/Constants.js');
 
-export default class Pyramid extends Piece {
+class Pyramid extends Piece {
   constructor(player, x, y, orientation) {
     super(PIECE_TYPES.PYRAMID, player, x, y, orientation);
+
+    this.baseFaces = ['faceA', 'faceB', 'faceC', 'faceD'];
+    this.updateFacesNames();
   }
 
   canMove() {
@@ -15,13 +18,56 @@ export default class Pyramid extends Piece {
     return true;
   }
 
+  rotate(clockwise = true) {
+    super.rotate(clockwise);
+    this.updateFacesNames();
+  }
+
+  getFaceDirections() {
+    const steps = (this.orientation / 90) % 4;
+
+    const rotatedFaces =
+      this.baseFaces.slice(-steps).concat(this.baseFaces.slice(0, -steps));
+
+    return {
+      NORTH: rotatedFaces[0],
+      EAST:  rotatedFaces[1],
+      SOUTH: rotatedFaces[2],
+      WEST:  rotatedFaces[3]
+    };
+  }
+
+  getDirectionOfFace(faceName) {
+    const faces = this.getFaceDirections();
+    return Object.entries(faces)
+      .find(([, f]) => f === faceName)?.[0] || null;
+  }
+
+  updateFacesNames() {
+    const steps = (this.orientation / 90) % 4;
+
+    this.faces = this.baseFaces.slice(-steps).concat(this.baseFaces.slice(0, -steps));
+
+    this.boardFaces = {
+      NORTH: this.faces[0],
+      EAST:  this.faces[1],
+      SOUTH: this.faces[2],
+      WEST:  this.faces[3]
+    };
+  }
+
+  getFaceHit(boardSide) {
+    return this.boardFaces[boardSide];
+  }
+
   reflectsLaser(dir) {
     return LaserPhysics.isPyramidReflectiveSide(this.orientation, dir);
   }
 
   interactWithLaser(dir) {
-    const newDirection = LaserPhysics.reflectOnPyramid(this.orientation, dir);
-    
+    console.log(`[PYRAMID] Incoming laser direction: ${JSON.stringify(dir)}`);
+    const newDirection = LaserPhysics.reflectOnPyramid(this, dir);
+
     if (newDirection) {
       console.log(`[PYRAMID] Reflecting laser from ${JSON.stringify(dir)} to ${JSON.stringify(newDirection)}`);
       return {
@@ -32,8 +78,8 @@ export default class Pyramid extends Piece {
     }
     
     console.log(`[PYRAMID] Destroyed by laser (non-reflective side hit)`);
-    return { 
-      type: 'DESTROY', 
+    return {
+      type: 'DESTROY',
       stop: false
     };
   }
@@ -46,26 +92,8 @@ export default class Pyramid extends Piece {
       left: false 
     };
 
-    // Miroir diagonal : 2 faces adjacentes protégées
-    switch (this.orientation) {
-      case 0:
-        sides.top = true;
-        sides.right = true;
-        break;
-      case 90:
-        sides.right = true;
-        sides.bottom = true;
-        break;
-      case 180:
-        sides.bottom = true;
-        sides.left = true;
-        break;
-      case 270:
-        sides.left = true;
-        sides.top = true;
-        break;
-    }
-
     return sides;
   }
 }
+
+module.exports = Pyramid;

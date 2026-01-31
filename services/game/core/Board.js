@@ -1,6 +1,6 @@
-import { BOARD_SIZE } from '../utils/Constants.js';
+const { BOARD_SIZE } = require('../utils/Constants.js');
 
-export default class Board {
+class Board {
   constructor() {
     this.grid = Array.from(
       { length: BOARD_SIZE }, 
@@ -12,9 +12,15 @@ export default class Board {
     return x >= 0 && x < BOARD_SIZE && y >= 0 && y < BOARD_SIZE;
   }
 
-  getPieceAt(x, y) {
-    if (!this.isValidPosition(x, y)) return null;
-    return this.grid[y][x];
+  getPieceAt(x, y) {    
+    if (y < 0 || y >= this.grid.length || x < 0 || x >= this.grid[0].length) {
+      console.log(`[Board.getPieceAt] Out of bounds`);
+      return null;
+    }
+
+    const piece = this.grid[y][x];
+    
+    return piece;
   }
 
   getPieces() {
@@ -80,3 +86,5 @@ export default class Board {
     return board;
   }
 }
+
+module.exports = Board;

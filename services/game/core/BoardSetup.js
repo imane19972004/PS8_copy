@@ -1,10 +1,11 @@
-import { BOARD_SIZE } from '../utils/Constants.js';
-import Sphinx from '../pieces/Sphinx.js';
-import Scarab from '../pieces/Scarab.js';
-import Pharaoh from '../pieces/Pharaoh.js';
-import Anubis from '../pieces/Anubis.js';
+const { BOARD_SIZE } = require('../utils/Constants.js');
+const { coordsToCell } = require('../utils/CellConverter.js');
+const Sphinx = require('../pieces/Sphinx.js');
+const Scarab = require('../pieces/Scarab.js');
+const Pharaoh = require('../pieces/Pharaoh.js');
+const Anubis = require('../pieces/Anubis.js');
 
-export default class BoardSetup {
+class BoardSetup {
   static initializeGame(board) {
     console.log('🎲 Setting up board...');
 
@@ -146,4 +147,40 @@ export default class BoardSetup {
       }
     });
   }
+
+  /**
+   * Les positions initiales des pièces pour l'API
+   */
+  static getInitialPositions(board) {
+    const positions = {};
+
+    board.pieces.forEach(piece => {
+      if (piece.player !== 1) return;
+
+      const cell = coordsToCell(piece.x, piece.y);
+
+      switch (piece.type) {
+        case 'sphinx':
+          positions.sphinx = cell;
+          break;
+
+        case 'pharaoh':
+          positions.pharaoh = cell;
+          break;
+
+        case 'scarab':
+          positions.scarab = {
+            position: cell,
+            orientation: piece.orientation
+          };
+          break;
+
+        // Anubis et Pyramides ne font PAS partie de l'initialisation IA
+      }
+    });
+
+    return positions;
+  }
 }
+
+module.exports = BoardSetup;

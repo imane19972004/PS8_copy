@@ -1,10 +1,157 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <title>TEST</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Khet – Laser Chess</title>
+    <link rel="icon" href="media/favicon.ico" type="image/x-icon" />
+    <link rel="stylesheet" href="css/main.css" />
 </head>
 <body>
-    TEST
+    <div class="hero">
+        <div class="hero-content">
+            <h1 class="hero-title">
+                <span class="icon">⚱</span>
+                KHET
+                <span class="icon">⚱</span>
+            </h1>
+            <p class="hero-subtitle">The Ancient Game of Laser Chess</p>
+            
+            <div class="hero-description">
+                <p>Strategic warfare meets ancient Egypt. Command your army, reflect deadly lasers, and destroy your opponent's Pharaoh to claim victory.</p>
+            </div>
+
+            <div class="settings">
+                <label>
+                    <input type="checkbox" id="fullscreenMode" />
+                    Fullscreen Mode
+                </label>
+            </div>
+
+            <!-- GAME MODE SELECTION -->
+            <div class="game-modes">
+                <a href="local.html" class="mode-card">
+                    <div class="mode-icon">🎮</div>
+                    <h3>Local 1v1</h3>
+                    <p>Play against a friend on the same device</p>
+                </a>
+
+                <a href="ai.html" class="mode-card mode-card-highlight">
+                    <div class="mode-icon">🤖</div>
+                    <h3>VS AI</h3>
+                    <p>Challenge our intelligent opponent</p>
+                </a>
+
+                <a href="online.html" class="mode-card mode-card-disabled">
+                    <div class="mode-icon">🌐</div>
+                    <h3>Online 1v1</h3>
+                    <p>Coming soon...</p>
+                </a>
+            </div>
+
+            <div class="features">
+                <div class="feature">
+                    <span class="feature-icon">⚔️</span>
+                    <span>5 Unique Pieces</span>
+                </div>
+                <div class="feature">
+                    <span class="feature-icon">💡</span>
+                    <span>Laser Physics</span>
+                </div>
+                <div class="feature">
+                    <span class="feature-icon">🧠</span>
+                    <span>Strategic Depth</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="hero-footer">
+            <a href="#rules" class="btn-secondary">📖 How to Play</a>
+            <a href="#about" class="btn-secondary">ℹ️ About</a>
+        </div>
+    </div>
+
+    <!-- RÈGLES DU JEU -->
+    <section id="rules" class="section">
+        <div class="container">
+            <h2 class="section-title">How to Play</h2>
+            
+            <div class="rules-grid">
+                <div class="rule-card">
+                    <h3>🎯 Objective</h3>
+                    <p>Destroy your opponent's Pharaoh with your laser beam while protecting your own.</p>
+                </div>
+
+                <div class="rule-card">
+                    <h3>⚡ Actions</h3>
+                    <p>Each turn: rotate a piece, move it, place a pyramid, or swap your Scarab.</p>
+                </div>
+
+                <div class="rule-card">
+                    <h3>💥 Laser</h3>
+                    <p>After your action, your Sphinx fires. The laser reflects on mirrors and destroys vulnerable pieces.</p>
+                </div>
+
+                <div class="rule-card">
+                    <h3>🏆 Victory</h3>
+                    <p>Hit the enemy Pharaoh to win. Protect yours at all costs!</p>
+                </div>
+            </div>
+
+            <h3 class="pieces-title">The Pieces</h3>
+            <div class="pieces-grid">
+                <div class="piece-card">
+                    <div class="piece-img">🗿</div>
+                    <h4>Sphinx</h4>
+                    <p>Immobile laser source. Indestructible.</p>
+                </div>
+
+                <div class="piece-card">
+                    <div class="piece-img">👑</div>
+                    <h4>Pharaoh</h4>
+                    <p>Immobile. Lose if destroyed.</p>
+                </div>
+
+                <div class="piece-card">
+                    <div class="piece-img">🐺</div>
+                    <h4>Anubis</h4>
+                    <p>Mobile. 1 shielded side.</p>
+                </div>
+
+                <div class="piece-card">
+                    <div class="piece-img">🔺</div>
+                    <h4>Pyramid</h4>
+                    <p>Mobile mirror. 2 reflective sides.</p>
+                </div>
+
+                <div class="piece-card">
+                    <div class="piece-img">🪲</div>
+                    <h4>Scarab</h4>
+                    <p>Mobile. Double mirror. Can swap.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- À PROPOS -->
+    <section id="about" class="section section-dark">
+        <div class="container">
+            <h2 class="section-title">About Khet</h2>
+            <p class="about-text">
+                Khet is a modern abstract strategy game combining lasers with ancient Egyptian themes. 
+                This digital adaptation was created as part of the PS8 Full-Stack Developer course at Polytech Nice Sophia.
+            </p>
+            <p class="about-text">
+                <strong>Technologies:</strong> Node.js, Socket.io, Canvas API, Pure JavaScript (ES6+)
+            </p>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <p>© 2025 Khet - Laser Chess | Polytech Nice Sophia</p>
+    </footer>
+
+    <script src="js/utils/home.js"></script>
+    <script src="js/utils/fullscreen.js"></script>
 </body>
 </html>

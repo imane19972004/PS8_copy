@@ -1,8 +1,8 @@
-import Piece from './Piece.js';
-import { PIECE_TYPES } from '../utils/Constants.js';
-import LaserPhysics from '../utils/LaserPhysics.js';
+const Piece = require('./Piece.js');
+const LaserPhysics = require('../rules/LaserPhysics.js');
+const { PIECE_TYPES } = require('../utils/Constants.js');
 
-export default class Scarab extends Piece {
+class Scarab extends Piece {
   constructor(player, x, y, orientation) {
     super(PIECE_TYPES.SCARAB, player, x, y, orientation);
     this.swapCooldowns = { 
@@ -50,3 +50,5 @@ export default class Scarab extends Piece {
     };
   }
 }
+
+module.exports = Scarab;

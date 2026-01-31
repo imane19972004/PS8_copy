@@ -1,7 +1,7 @@
 /**
  * Server-side Logger
  */
-export default class ServerLogger {
+class ServerLogger {
     constructor() {
         this.logs = [];
         this.maxLogs = 100;
@@ -64,3 +64,5 @@ export default class ServerLogger {
         return this.logs;
     }
 }
+
+module.exports = ServerLogger;

@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Khet – Local 1v1</title>
+    <link rel="stylesheet" href="css/main.css" />
+    <link rel="stylesheet" href="css/game.css" />
+    <link rel="stylesheet" href="css/components.css" />
+</head>
+<body>
+    <div class="game-container">
+        <!-- Header avec navigation -->
+        <header>
+            <div class="header-left">
+                <a href="index.html" class="btn-nav">← Back</a>
+                <h1>⚱ LOCAL 1V1 ⚱</h1>
+            </div>
+            <div class="settings">
+                <label>
+                    <input type="checkbox" id="fullscreenMode" />
+                    Fullscreen
+                </label>
+            </div>
+            <div class="header-right">
+                <div id="turnIndicator" class="turn-indicator">PLAYER 1</div>
+                <button id="resetGameBtn" class="btn-primary">🔄 RESET GAME</button>
+            </div>
+        </header>
+
+        <!-- Main Game Area -->
+        <div class="main-game">
+            <!-- Player 1 Panel -->
+            <aside class="player-panel">
+                <h2>⚔ Player 1 ⚔</h2>
+                <div class="player-color" style="background:#4A90E2;"></div>
+                <div class="player-info">
+                    <p>Pyramids: <span id="p1-reserve">7</span>/7</p>
+                </div>
+                <div class="reserve" id="p1-reserve-display"></div>
+                
+                <!-- Bouton Place Pyramid (affiché dynamiquement) -->
+                <button id="p1-place-pyramid-btn" class="place-pyramid-btn" style="display: none;">
+                    🔺 Place Pyramid
+                </button>
+
+                <!-- Actions contextuelles (affichées dynamiquement) -->
+                <div id="p1-actions" class="player-actions-container"></div>
+            </aside>
+
+            <!-- Board -->
+            <div class="board-container">
+                <canvas id="gameBoard" width="600" height="600"></canvas>
+            </div>
+
+            <!-- Player 2 Panel -->
+            <aside class="player-panel">
+                <h2>⚔ Player 2 ⚔</h2>
+                <div class="player-color" style="background:#F5A623;"></div>
+                <div class="player-info">
+                    <p>Pyramids: <span id="p2-reserve">7</span>/7</p>
+                </div>
+                <div class="reserve" id="p2-reserve-display"></div>
+
+                <!-- Bouton Place Pyramid (affiché dynamiquement) -->
+                <button id="p2-place-pyramid-btn" class="place-pyramid-btn" style="display: none;">
+                    🔺 Place Pyramid
+                </button>
+
+                <!-- Actions contextuelles (affichées dynamiquement) -->
+                <div id="p2-actions" class="player-actions-container"></div>
+            </aside>
+        </div>
+
+        <!-- Actions Panel simplifié - juste pour les hints -->
+
+        <div class="hints-and-logs">
+            <section class="actions-panel">
+            <h3>⚡ Game Status ⚡</h3>
+            <div id="actionHint" class="action-hint">Select a piece to start</div>
+        </section>
+
+        <!-- Game Log -->
+        <section class="log-panel">
+            <h3>📜 Game Log 📜</h3>
+            <div id="gameLog" class="log-content">
+                <p>Game initialized. Player 1's turn.</p>
+            </div>
+        </section>
+        </div>
+    </div>
+
+    <script type="module" src="js/entrypoints/local/main.js"></script>
+    <script src="js/utils/fullscreen.js"></script>
+</body>
+</html>

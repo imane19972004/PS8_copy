@@ -10,5 +10,5 @@ const server = http.createServer(function (request, response) {
 
 server.listen(PORT, () => {
   console.log(`\n📁 File Service started on port ${PORT}`);
-  console.log(`   Open: http://localhost:${PORT}/game.html\n`);
+  console.log(`   Open: http://localhost:8000/index.html\n`);
 });

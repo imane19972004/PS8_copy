@@ -1,7 +1,7 @@
-import Pyramid from '../pieces/Pyramid.js';
-import { ACTION_TYPES } from '../utils/Constants.js';
+const Pyramid = require('../pieces/Pyramid.js');
+const { ACTION_TYPES } = require('../utils/Constants.js');
 
-export default class ActionExecutor {
+class ActionExecutor {
   constructor(board, turnManager) {
     this.board = board;
     this.turnManager = turnManager;
@@ -21,10 +21,10 @@ export default class ActionExecutor {
       case ACTION_TYPES.MOVE:
         return this.move(action.params);
       
-      case ACTION_TYPES.PLACE_PYRAMID:
+      case ACTION_TYPES.PLACE:
         return this.placePyramid(action.params);
       
-      case ACTION_TYPES.SWAP_SCARAB:
+      case ACTION_TYPES.EXCHANGE:
         return this.swapScarab(action.params);
       
       default:
@@ -34,6 +34,11 @@ export default class ActionExecutor {
 
   validateTurn(action) {
     const currentPlayer = this.turnManager.getCurrentPlayer();
+    
+    if (action.player.turn) {
+      return action.player.turn === currentPlayer;
+    }
+    
     return action.player === currentPlayer;
   }
 
@@ -207,3 +212,5 @@ export default class ActionExecutor {
     };
   }
 }
+
+module.exports = ActionExecutor;
