@@ -3,8 +3,7 @@
  * Gère la communication HTTP avec le serveur de jeu
  */
 
-//const API_BASE = 'http://localhost:8000'; // Via le gateway
-const API_BASE = 'http://localhost:8002'; // Via le gateway
+const API_BASE = 'http://localhost:8000'; // Via le gateway
 
 
 export class GameApiClient {

@@ -68,6 +68,9 @@ function setup(initialPositions, isFirstPlayer) {
  *   { action: "ROTATE"|"MOVE"|"PLACE"|"EXCHANGE", cell: Cell, result: ... }
  * @returns {Promise<Object>} - Promise résolue en Action
  */
+
+
+
 function nextMove(opponentAction) {
     const startTime = Date.now();
     
@@ -85,7 +88,24 @@ function nextMove(opponentAction) {
         gameState.turnCount++;
         
         // Choisir la meilleure action
-        const action = chooseBestAction(startTime);
+        let action = chooseBestAction(startTime);
+        
+        //  RE-VALIDER l'action avant de la jouer
+        // (au cas où le board a changé entre-temps)
+        let attempts = 0;
+        const maxAttempts = 3;
+        
+        while (action && !isActionValid(action, gameState.board) && attempts < maxAttempts) {
+            console.warn('[AI] Chosen action became invalid, choosing another...');
+            action = chooseBestAction(startTime);
+            attempts++;
+        }
+        
+        //  Vérification finale
+        if (action && !isActionValid(action, gameState.board)) {
+            console.error('[AI] Failed to find valid action after retries');
+            return null;
+        }
         
         // Appliquer l'action et simuler le laser
         if (action) {
@@ -112,42 +132,147 @@ exports.nextMove = nextMove;
  * Choisit la meilleure action selon une stratégie rapide
  * Détection menace & évaluation rapide
  */
+
+
+
+
 function chooseBestAction(startTime) {
+    // Générer toutes les actions valides
     const actions = generateAllValidActions();
     
-    if (actions.length === 0) return null;
+    // Filtrer pour garder seulement les actions valides sur le board actuel
+    const validActions = actions.filter(action => isActionValid(action, gameState.board));
     
-    let best = actions[0];
+    // Shuffle pour éviter les boucles
+    const shuffledActions = shuffleArray(validActions);
+    
+    // Stocker toutes les actions avec le meilleur score
+    const bestActions = [];
     let bestScore = -Infinity;
     
-    for (let i = 0; i < actions.length; i++) {
+    // Évaluer toutes les actions (ou jusqu'au timeout)
+    for (let i = 0; i < shuffledActions.length; i++) {
+        // Vérifier timeout
         if (Date.now() - startTime > 230) break;
         
-        const action = actions[i];
+        const action = shuffledActions[i];
+        
+        // Cloner le board pour simulation
         const boardCopy = cloneBoard(gameState.board);
+        
+        // Appliquer l'action sur la copie
         applyActionToBoard(action, gameState.myPlayer, boardCopy);
         
+        // Simuler le laser SEULEMENT si pas un swap avec Sphinx
         let victims = [];
         if (!isSwapWithSphinx(action)) {
             victims = simulateLaser(boardCopy, gameState.myPlayer);
+            
+            // Appliquer les destructions sur la copie
+            for (const victim of victims) {
+                boardCopy[victim.y][victim.x] = null;
+            }
         }
         
-        for (const victim of victims) {
-            boardCopy[victim.y][victim.x] = null;
-        }
-        
+        // Évaluer la position résultante
         const score = evaluate(boardCopy, victims);
         
+        // Si meilleur score, remplacer
         if (score > bestScore) {
             bestScore = score;
-            best = action;
+            bestActions.length = 0; // Vider la liste
+            bestActions.push(action);
+        }
+        // Si même score, ajouter à la liste
+        else if (score === bestScore) {
+            bestActions.push(action);
         }
         
+        // Si victoire assurée, arrêter la recherche
         if (score >= 100000) break;
     }
     
-    return best;
+    // Choisir aléatoirement parmi les meilleures actions
+    if (bestActions.length > 0) {
+        const randomIndex = Math.floor(Math.random() * bestActions.length);
+        return bestActions[randomIndex];
+    }
+    
+    // Fallback : retourner la première action valide
+    // (ce cas ne devrait jamais arriver car il y a toujours au moins une rotation)
+    return validActions.length > 0 ? validActions[0] : null;
 }
+
+
+
+
+/**
+ * Vérifie si une action est valide sur le board actuel
+ */
+function isActionValid(action, board) {
+    const fromCoords = cellToCoords(action.cell);
+    
+    switch (action.action) {
+        case ACTION_TYPES.ROTATE:
+            if (!fromCoords) return false;
+            const piece = board[fromCoords.y][fromCoords.x];
+            return piece && piece.player === gameState.myPlayer;
+            
+        case ACTION_TYPES.MOVE:
+            const toCoords = cellToCoords(action.result);
+            if (!fromCoords || !toCoords) return false;
+            const movePiece = board[fromCoords.y][fromCoords.x];
+            const destPiece = board[toCoords.y][toCoords.x];
+            return movePiece && 
+                   movePiece.player === gameState.myPlayer && 
+                   destPiece === null;
+            
+        case ACTION_TYPES.PLACE:
+            const destCoords = cellToCoords(action.result.destination);
+            if (!destCoords) return false;
+            
+            // Vérifier que la case est vide
+            if (board[destCoords.y][destCoords.x] !== null) {
+                return false;
+            }
+            
+            // Vérifier adjacence interdite (Pharaoh/Sphinx)
+            const deltas = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+            for (const [dx, dy] of deltas) {
+                const nx = destCoords.x + dx;
+                const ny = destCoords.y + dy;
+                
+                if (isValidCell(nx, ny)) {
+                    const adjPiece = board[ny][nx];
+                    if (adjPiece && 
+                        (adjPiece.type === PIECE_TYPES.PHARAOH || 
+                         adjPiece.type === PIECE_TYPES.SPHINX)) {
+                        return false;
+                    }
+                }
+            }
+            
+            return true;
+            
+        case ACTION_TYPES.EXCHANGE:
+            const exchangeToCoords = cellToCoords(action.result);
+            if (!fromCoords || !exchangeToCoords) return false;
+            const scarab = board[fromCoords.y][fromCoords.x];
+            const target = board[exchangeToCoords.y][exchangeToCoords.x];
+            return scarab && 
+                   scarab.type === PIECE_TYPES.SCARAB && 
+                   scarab.player === gameState.myPlayer &&
+                   target && 
+                   target.player === gameState.myPlayer;
+            
+        default:
+            return false;
+    }
+}
+
+
+
+
 
 /**
  * Évalue une position de plateau
@@ -377,65 +502,161 @@ function generateMoveActions() {
  * Génère les actions de placement de pyramide possibles
  * Pas de pyramide adjacente au Pharaon ou aux Sphinx
  */
+
+
+
+
 function generatePlaceActions() {
     const actions = [];
-    const orientations = [0, 9, 90, 99];
     
-    // 1. Trouver les positions interdites
-    const forbiddenCells = new Set();
+    //  Vérifier combien de pyramides il reste
+    //const pyramidsLeft = gameState.pyramidReserve || 7;
+    const pyramidsLeft = gameState.myReserve;
+    if (pyramidsLeft <= 0) {
+        return actions; // Pas de pyramides disponibles
+    }
+    
+    const orientations = [0, 9, 90, 99];// Seulement 2 orientations
     
     for (let y = 0; y < BOARD_SIZE; y++) {
         for (let x = 0; x < BOARD_SIZE; x++) {
-            const piece = gameState.board[y][x];
+            //  VÉRIFICATION CRITIQUE : Case DOIT être vide MAINTENANT
+            const currentPiece = gameState.board[y][x];
+            if (currentPiece !== null) {
+                continue; // Skip case occupée
+            }
             
-            // Si c'est un Pharaon ou un Sphinx (peu importe le joueur)
-            if (piece && (piece.type === PIECE_TYPES.PHARAOH || piece.type === PIECE_TYPES.SPHINX)) {
-                // Marquer les 4 cellules adjacentes comme interdites
-                const deltas = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+            const cell = coordsToCell(x, y);
+            if (cell < 0) continue; // Cell invalide
+            
+            //  Vérifier adjacence interdite (Pharaoh/Sphinx)
+            let forbidden = false;
+            const deltas = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+            
+            for (const [dx, dy] of deltas) {
+                const nx = x + dx;
+                const ny = y + dy;
                 
-                for (const [dx, dy] of deltas) {
-                    const adjX = x + dx;
-                    const adjY = y + dy;
-                    
-                    if (isValidCell(adjX, adjY)) {
-                        const adjCell = coordsToCell(adjX, adjY);
-                        if (adjCell >= 0) {
-                            forbiddenCells.add(adjCell);
-                        }
+                if (isValidCell(nx, ny)) {
+                    const adjPiece = gameState.board[ny][nx];
+                    if (adjPiece && 
+                        (adjPiece.type === PIECE_TYPES.PHARAOH || 
+                         adjPiece.type === PIECE_TYPES.SPHINX)) {
+                        forbidden = true;
+                        break;
                     }
                 }
             }
-        }
-    }
-    
-    // 2. Générer les placements valides sur toutes les cellules vides NON interdites
-    for (let y = 0; y < BOARD_SIZE; y++) {
-        for (let x = 0; x < BOARD_SIZE; x++) {
-            const cell = coordsToCell(x, y);
             
-            const currentPiece = gameState.board[y][x];
+            if (forbidden) continue;
             
-            if (cell >= 0 && 
-                currentPiece === null && // Vérification stricte
-                !forbiddenCells.has(cell)) {
-                
-                // Ajouter une action pour chaque orientation possible
-                for (const orientation of orientations) {
-                    actions.push({
-                        action: ACTION_TYPES.PLACE,
-                        cell: -1, // La pyramide vient de la réserve
-                        result: {
-                            destination: cell,
-                            orientation: orientation
-                        }
-                    });
-                }
+            // Ajouter SEULEMENT 2 orientations
+            for (const orientation of orientations) {
+                actions.push({
+                    action: ACTION_TYPES.PLACE,
+                    cell: -1,
+                    result: {
+                        destination: cell,
+                        orientation: orientation
+                    }
+                });
             }
         }
     }
     
     return actions;
 }
+
+
+//1. Vérification stricte de la case vide
+//2. Réduction des orientations  => Pourquoi ? Réduire le nombre d'actions générées pour respecter le timeout de 250ms.
+//3. Vérification stricte de la cellule valide
+
+
+
+
+
+/**
+ * Mélange un tableau (Fisher-Yates shuffle)
+ */
+function shuffleArray(array) {
+    const shuffled = [...array];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
+}
+
+/**
+ * Vérifie si une action est valide sur le board actuel
+ */
+function isActionValid(action, board) {
+    const fromCoords = cellToCoords(action.cell);
+    
+    switch (action.action) {
+        case ACTION_TYPES.ROTATE:
+            if (!fromCoords) return false;
+            const piece = board[fromCoords.y][fromCoords.x];
+            return piece && piece.player === gameState.myPlayer;
+            
+        case ACTION_TYPES.MOVE:
+            const toCoords = cellToCoords(action.result);
+            if (!fromCoords || !toCoords) return false;
+            const movePiece = board[fromCoords.y][fromCoords.x];
+            const destPiece = board[toCoords.y][toCoords.x];
+            return movePiece && 
+                   movePiece.player === gameState.myPlayer && 
+                   destPiece === null;
+            
+        case ACTION_TYPES.PLACE:
+            const destCoords = cellToCoords(action.result.destination);
+            if (!destCoords) return false;
+            
+            // Vérifier que la case est vide
+            if (board[destCoords.y][destCoords.x] !== null) {
+                return false;
+            }
+            
+            // Vérifier adjacence interdite (Pharaoh/Sphinx)
+            const deltas = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+            for (const [dx, dy] of deltas) {
+                const nx = destCoords.x + dx;
+                const ny = destCoords.y + dy;
+                
+                if (isValidCell(nx, ny)) {
+                    const adjPiece = board[ny][nx];
+                    if (adjPiece && 
+                        (adjPiece.type === PIECE_TYPES.PHARAOH || 
+                         adjPiece.type === PIECE_TYPES.SPHINX)) {
+                        return false;
+                    }
+                }
+            }
+            
+            return true;
+            
+        case ACTION_TYPES.EXCHANGE:
+            const exchangeToCoords = cellToCoords(action.result);
+            if (!fromCoords || !exchangeToCoords) return false;
+            const scarab = board[fromCoords.y][fromCoords.x];
+            const target = board[exchangeToCoords.y][exchangeToCoords.x];
+            return scarab && 
+                   scarab.type === PIECE_TYPES.SCARAB && 
+                   scarab.player === gameState.myPlayer &&
+                   target && 
+                   target.player === gameState.myPlayer;
+            
+        default:
+            return false;
+    }
+}
+
+
+
+
+
+
 
 /**
  * Génère les actions d'échange Scarab possibles
@@ -766,7 +987,7 @@ function cloneBoard(board) {
  * Applique une action sur le plateau
  */
 function applyActionToBoard(action, player, board) {
-    console.log(`[DEBUG] Applying action:`, action, `for player ${player}`);
+    // console.log(`[DEBUG] Applying action:`, action, `for player ${player}`);
     
     const fromCoords = cellToCoords(action.cell);
     
@@ -777,7 +998,7 @@ function applyActionToBoard(action, player, board) {
                 if (piece) {
                     const delta = action.result === 'CLOCKWISE' ? 90 : -90;
                     piece.orientation = (piece.orientation + delta + 360) % 360;
-                    console.log(`[DEBUG] Rotated piece at (${fromCoords.x}, ${fromCoords.y})`);
+                    // console.log(`[DEBUG] Rotated piece at (${fromCoords.x}, ${fromCoords.y})`);
                 }
             }
             break;
@@ -785,7 +1006,7 @@ function applyActionToBoard(action, player, board) {
         case ACTION_TYPES.MOVE:
             const toCoords = cellToCoords(action.result);
             if (fromCoords && toCoords) {
-                console.log(`[DEBUG] Moving from (${fromCoords.x}, ${fromCoords.y}) to (${toCoords.x}, ${toCoords.y})`);
+                //console.log(`[DEBUG] Moving from (${fromCoords.x}, ${fromCoords.y}) to (${toCoords.x}, ${toCoords.y})`);
                 
                 // Vérifier si destination est vide
                 if (board[toCoords.y][toCoords.x] !== null) {
@@ -801,7 +1022,7 @@ function applyActionToBoard(action, player, board) {
         case ACTION_TYPES.PLACE:
             const destCoords = cellToCoords(action.result.destination);
             if (destCoords) {
-                console.log(`[DEBUG] Placing pyramid at (${destCoords.x}, ${destCoords.y}), orientation: ${action.result.orientation}`);
+                //console.log(`[DEBUG] Placing pyramid at (${destCoords.x}, ${destCoords.y}), orientation: ${action.result.orientation}`);
                 
                 if (board[destCoords.y][destCoords.x] !== null) {
                     console.error(`[ERROR] Trying to place on occupied cell (${destCoords.x}, ${destCoords.y}):`, 
@@ -818,10 +1039,10 @@ function applyActionToBoard(action, player, board) {
                 if (board === gameState.board) {
                     if (player === gameState.myPlayer) {
                         gameState.myReserve--;
-                        console.log(`[DEBUG] My reserve: ${gameState.myReserve}`);
+                        //console.log(`[DEBUG] My reserve: ${gameState.myReserve}`);
                     } else {
                         gameState.opponentReserve--;
-                        console.log(`[DEBUG] Opponent reserve: ${gameState.opponentReserve}`);
+                        //console.log(`[DEBUG] Opponent reserve: ${gameState.opponentReserve}`);
                     }
                 }
             }
@@ -830,7 +1051,7 @@ function applyActionToBoard(action, player, board) {
         case ACTION_TYPES.EXCHANGE:
             const toExchangeCoords = cellToCoords(action.result);
             if (fromCoords && toExchangeCoords) {
-                console.log(`[DEBUG] Exchanging (${fromCoords.x}, ${fromCoords.y}) with (${toExchangeCoords.x}, ${toExchangeCoords.y})`);
+                //console.log(`[DEBUG] Exchanging (${fromCoords.x}, ${fromCoords.y}) with (${toExchangeCoords.x}, ${toExchangeCoords.y})`);
                 
                 const temp = board[fromCoords.y][fromCoords.x];
                 board[fromCoords.y][fromCoords.x] = board[toExchangeCoords.y][toExchangeCoords.x];

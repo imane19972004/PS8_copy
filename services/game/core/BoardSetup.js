@@ -154,7 +154,7 @@ class BoardSetup {
   static getInitialPositions(board) {
     const positions = {};
 
-    board.pieces.forEach(piece => {
+    board.getPieces().forEach(piece => { 
       if (piece.player !== 1) return;
 
       const cell = coordsToCell(piece.x, piece.y);
