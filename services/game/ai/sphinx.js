@@ -137,25 +137,41 @@ exports.nextMove = nextMove;
 
 
 function chooseBestAction(startTime) {
-    // Générer toutes les actions valides
+    let best = null;
+    let bestScore = -Infinity;
+    const MAX_ACTIONS_TO_EVALUATE = 200; // Augmenté pour plus de choix
+    
+    // Générer SEULEMENT les actions valides MAINTENANT
     const actions = generateAllValidActions();
     
-    // Filtrer pour garder seulement les actions valides sur le board actuel
+    if (actions.length === 0) {
+        const rotateActions = generateRotateActions();
+        if (rotateActions.length > 0) {
+            return rotateActions[0];
+        }
+        return null;
+    }
+    
+    // FILTRER les actions invalides AVANT évaluation
     const validActions = actions.filter(action => isActionValid(action, gameState.board));
     
-    // Shuffle pour éviter les boucles
+    if (validActions.length === 0) {
+        console.warn('[AI] No valid actions available!');
+        return null;
+    }
+    
+    //  SHUFFLE pour éviter les boucles
     const shuffledActions = shuffleArray(validActions);
+    const actionsToEvaluate = shuffledActions.slice(0, MAX_ACTIONS_TO_EVALUATE);
     
     // Stocker toutes les actions avec le meilleur score
     const bestActions = [];
-    let bestScore = -Infinity;
     
-    // Évaluer toutes les actions (ou jusqu'au timeout)
-    for (let i = 0; i < shuffledActions.length; i++) {
+    for (let i = 0; i < actionsToEvaluate.length; i++) {
         // Vérifier timeout
         if (Date.now() - startTime > 230) break;
         
-        const action = shuffledActions[i];
+        const action = actionsToEvaluate[i];
         
         // Cloner le board pour simulation
         const boardCopy = cloneBoard(gameState.board);
@@ -180,7 +196,7 @@ function chooseBestAction(startTime) {
         // Si meilleur score, remplacer
         if (score > bestScore) {
             bestScore = score;
-            bestActions.length = 0; // Vider la liste
+            bestActions.length = 0;
             bestActions.push(action);
         }
         // Si même score, ajouter à la liste
@@ -192,16 +208,28 @@ function chooseBestAction(startTime) {
         if (score >= 100000) break;
     }
     
-    // Choisir aléatoirement parmi les meilleures actions
+    //  Choisir aléatoirement parmi les meilleures
     if (bestActions.length > 0) {
         const randomIndex = Math.floor(Math.random() * bestActions.length);
-        return bestActions[randomIndex];
+        const chosenAction = bestActions[randomIndex];
+        
+        // DOUBLE VÉRIFICATION finale
+        if (isActionValid(chosenAction, gameState.board)) {
+            return chosenAction;
+        }
     }
     
-    // Fallback : retourner la première action valide
-    // (ce cas ne devrait jamais arriver car il y a toujours au moins une rotation)
-    return validActions.length > 0 ? validActions[0] : null;
+    //  Fallback sécurisé : chercher n'importe quelle action valide
+    for (const action of shuffleArray(validActions)) {
+        if (isActionValid(action, gameState.board)) {
+            return action;
+        }
+    }
+    
+    console.warn('[AI] No valid action found after all attempts');
+    return null;
 }
+
 
 
 

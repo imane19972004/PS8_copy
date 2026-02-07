@@ -5,7 +5,6 @@
 
 const API_BASE = 'http://localhost:8000'; // Via le gateway
 
-
 export class GameApiClient {
     constructor() {
         this.gameId = null;
